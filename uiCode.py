@@ -425,7 +425,7 @@ def packet_callback(packet):
 
 
     
-
+# TO DO: The realtime table
 # sniff(prn=packet_callback, store=0)
 
 
