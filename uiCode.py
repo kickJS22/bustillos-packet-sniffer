@@ -2,6 +2,29 @@ from scapy.all import sniff, TCP, UDP, raw, IP
 import socket
 import pandas as pd
 
+import tkinter as tk
+from tkinter import ttk
+
+window = tk.Tk()
+window.geometry("1920x1080")
+window.title("Packet Table")
+
+table = ttk.Treeview(window, columns=("id","route","proto","type","ttl","ipVer","ipSrc", "ipDst", "chkSum", "serv", "url", "load"),show="headings")
+table.heading("id",text="ID")
+table.heading("route",text="Route")
+table.heading("proto",text="Protocol")
+table.heading("type",text="Type")
+table.heading("ttl",text="TTL")
+table.heading("ipVer",text="IP Version")
+table.heading("ipSrc",text="IP Source")
+table.heading("ipDst",text="IP Destination")
+table.heading("chkSum",text="CheckSum")
+table.heading("serv",text="Service")
+table.heading("url",text="URL")
+table.heading("load",text="Load")
+table.pack()
+
+window.mainloop()
 protocolList = {
     0: "HOPOPT",
     1: "ICMP",
@@ -355,39 +378,35 @@ protocolIdentifier = {
 }
 
 
-columns = ["ROUTE", "ID", "TYPE", "TTL", "IP VERSION", "IP SRC", "IP DST", "CHECKSUM (HEX)", "CHECKSUM", "PROTOCOL", "LENGTH", "SRC PORT", "DST PORT", "SERVICE", "URL"]
-df = pd.DataFrame(columns=columns)
-
 def packet_callback(packet):
+    
+    id= packet.id    
+    
+    route = packet.route()[0]
     
     protocol = protocolList[packet.proto]
 
     type = protocolIdentifier[packet.type]
-
     typeNum = packet.type
 
-    id= packet.id    
+    ttl = packet.ttl
 
-    load= raw(packet)
-    
     ipVer = packet[IP].version
     
     ipSrc = packet[IP].src
     
     ipDst = packet[IP].dst
 
-    ttl = packet.ttl
 
     checkSumHex = hex(packet[IP].chksum)
-
     checkSum = packet[IP].chksum
-    
-    route = packet.route()[0]
 
     service=""
 
     url=""
 
+    load= raw(packet)
+    
     try:       
         service = socket.getservbyport(packet.dport, protocol.lower() +"")
     except:
@@ -402,33 +421,12 @@ def packet_callback(packet):
         try:
             url = socket.gethostbyaddr(ipDst)
         except:
-            url = "Can't resolve"
+            url = "Can't resolve"    
 
-    # print(f"ROUTE: {route}, ID: {id}, TYPE ({typeNum}): {type}, TTL: {ttl}, IP VERSION: {ipVer} IP SRC: {ipSrc}, IP DST: {ipDst}, CHECKSUM (checkSum) HEX: {checkSumHex} Protocol: {protocol}, Length: {packet.len}, SRC PORT: {packet.sport}, DST PORT: {packet.dport}, SERVICE: {service}, URL= {url[0]}")
-    global df
-    df = df.append({
-        "ROUTE": route,
-        "ID": id,
-        "TYPE": f"{type} ({typeNum})",
-        "TTL": ttl,
-        "IP VERSION": ipVer,
-        "IP SRC": ipSrc,
-        "IP DST": ipDst,
-        "CHECKSUM (HEX)": checkSumHex,
-        "CHECKSUM": checkSum,
-        "PROTOCOL": protocol,
-        "LENGTH": packet.len,
-        "SRC PORT": packet.sport,
-        "DST PORT": packet.dport,
-        "SERVICE": service,
-        "URL": url[0]
-    }, ignore_index=True)
 
-    # Print the DataFrame
-    print(df)
     
 
-sniff(prn=packet_callback, store=0)
+# sniff(prn=packet_callback, store=0)
 
 
 
